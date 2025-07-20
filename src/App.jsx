@@ -24,6 +24,7 @@ import {
   BarChart3,
   Ribbon,
   Save,
+  Pin,
 } from "lucide-react";
 
 const App = () => {
@@ -36,12 +37,14 @@ const App = () => {
   const [pendingTodo, setPendingTodo] = useState([]);
   const [totalTodos, setTotalTodos] = useState(0);
   const [serarchTodo, setSearchTodo] = useState("");
+  const [pinnedTodoIds, setPinnedTodoIds] = useState([]);
 
   useEffect(() => {
     const storeTodos = localStorage.getItem("todos");
     const storedCompleted = localStorage.getItem("completedTodo");
     const storePending = localStorage.getItem("pendingTodo");
     const storedTotal = localStorage.getItem("totalTodos");
+    const storedPinTodo = localStorage.getItem("pinnedTodoIds");
 
     if (storeTodos) {
       try {
@@ -91,6 +94,18 @@ const App = () => {
       }
     }
 
+    if (storePending) {
+      try {
+        const parsePin = JSON.parse(storedPinTodo);
+        if (Array.isArray(parsePin)) {
+          setPinnedTodoIds(parsePin);
+        }
+      } catch (error) {
+        console.error("Error parsing pinnedTodoIds from localStorage:", error);
+        localStorage.removeItem("pinnedTodoIds");
+      }
+    }
+
     setIsCartInitialized(true);
   }, []);
 
@@ -100,8 +115,9 @@ const App = () => {
       localStorage.setItem("completedTodo", JSON.stringify(completedTodo));
       localStorage.setItem("pendingTodo", JSON.stringify(pendingTodo));
       localStorage.setItem("totalTodos", totalTodos.toString());
+      localStorage.setItem("pinnedTodoIds", JSON.stringify(pinnedTodoIds));
     }
-  }, [todos, completedTodo, totalTodos, isCartInitialized]);
+  }, [todos, completedTodo, totalTodos, pinnedTodoIds, isCartInitialized]);
 
   useEffect(() => {
     refFocus.current?.focus();
@@ -174,21 +190,27 @@ const App = () => {
 
   const btnDisabled = todo.trim() === "";
 
-  console.log("Search todos", serarchTodo);
-
   const onSearchTodo = [...todos].filter((todo) =>
     todo.todo.toLowerCase().includes(serarchTodo.toLowerCase())
   );
 
-  // console.log("onSearchTodo", onSearchTodo);
+  const onPinTodo = (id) => {
+    if (pinnedTodoIds.includes(id)) {
+      setPinnedTodoIds(pinnedTodoIds.filter((itemId) => itemId !== id));
+    } else {
+      setPinnedTodoIds([...pinnedTodoIds, id]);
+    }
+  };
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-gray-100">
-      <div className="flex justify-between items-center mt-5">
-        <h1 className="text-2xl font-bold items-center flex justify-center">
-          My todo list
-        </h1>
-        <div className="ml-[900px] flex w-[300px] rounded-full bg-black text-white p-2 border-r-0 border-black focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-lg">
+    <div className="flex flex-col items-center min-h-screen bg-gray-100 px-4 sm:px-0">
+      <div className="flex flex-col sm:flex-row justify-between items-center mt-5 w-full sm:w-[90%] max-w-[1200px]">
+        <img
+          src="public/todoNest.png"
+          className="w-28 h-28 sm:w-40 sm:h-40"
+          alt=""
+        />
+        <div className="mt-4 sm:mt-0 flex w-full sm:w-[300px] rounded-full bg-black text-white p-2 focus:ring-2 focus:ring-blue-500 shadow-lg">
           <Search className="text-gray-300 ml-2" />
           <input
             type="search"
@@ -198,36 +220,41 @@ const App = () => {
           />
         </div>
       </div>
-      <div>
+
+      <div className="mt-6 flex flex-col sm:flex-row items-center gap-3">
         <input
           onChange={onHandleTodo}
           value={todo}
-          // ref={refFocus}
           type="text"
           placeholder="Add your todo...."
-          className="mt-10 w-[300px] rounded-md p-2 border-r-0 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md"
+          className="w-full sm:w-[300px] rounded-md p-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md"
         />
         <button
-          // onClick={editId ? () => onSaveTodo(editId) : onAddTodo}
           onClick={onAddTodo}
           disabled={btnDisabled}
           style={{ cursor: btnDisabled ? "not-allowed" : "pointer" }}
-          className="w-[100px] h-[40px] bg-[#4dabf7] cursor-pointer rounded-md border-l-0 border-black ml-2"
+          className="w-full sm:w-[100px] h-[40px] bg-[#4dabf7] rounded-md"
         >
           Add Todo
         </button>
       </div>
 
-      <div>
+      <div className="flex flex-wrap gap-4 mt-10 justify-center w-full px-2">
         <div className="flex flex-wrap gap-4 mt-10 justify-center">
-          <div className="w-56 bg-black mt-5 rounded-md shadow-lg h-20 flex justify-start gap-5 items-center text-white">
+          <div
+            style={{ display: totalTodos ? "flex" : "none" }}
+            className="w-56 bg-black mt-5 rounded-md shadow-lg h-20 flex justify-start gap-5 items-center text-white"
+          >
             <div className="px-6 flex flex-col justify-start items-start">
               <h1 className="text-xl text-white">Total Task</h1>
               <h1 className="text-blue-600 text-xl font-bold">{totalTodos}</h1>
             </div>
             <BarChart3 size={30} className="ml-2 text-blue-500" />
           </div>
-          <div className="w-56 bg-black mt-5 rounded-md shadow-lg h-20 flex justify-start gap-5 items-center text-white">
+          <div
+            style={{ display: completedTodo.length === 0 ? "none" : "flex" }}
+            className="w-56 bg-black mt-5 rounded-md shadow-lg h-20 flex justify-start gap-5 items-center text-white"
+          >
             <div className="px-6 flex flex-col justify-start items-start">
               <h1 className="text-xl text-white">Completed</h1>
               <h1 className="text-orange-400 text-xl font-bold">
@@ -236,7 +263,22 @@ const App = () => {
             </div>
             <CheckCircle size={30} className="ml-2 text-green-500" />
           </div>
-          <div className="w-56 bg-black mt-5 rounded-md shadow-lg h-20 flex justify-start gap-5 items-center text-white">
+          <div
+            style={{ display: pinnedTodoIds.length === 0 ? "none" : "flex" }}
+            className="w-56 bg-black mt-5 rounded-md shadow-lg h-20 flex justify-start gap-5 items-center text-white"
+          >
+            <div className="px-6 flex flex-col justify-start items-start">
+              <h1 className="text-xl text-white">Hign Priority</h1>
+              <h1 className="text-orange-400 text-xl font-bold">
+                {pinnedTodoIds.length}
+              </h1>
+            </div>
+            <Bell size={30} className="ml-2 text-red-500" />
+          </div>
+          <div
+            style={{ display: pendingTodo.length === 0 ? "none" : "flex" }}
+            className="w-56 bg-black mt-5 rounded-md shadow-lg h-20 flex justify-start gap-5 items-center text-white"
+          >
             <div className="px-6 flex flex-col justify-start items-start">
               <h1 className="text-xl text-white">Pending</h1>
               <h1 className="text-orange-600 text-xl font-bold">
@@ -307,6 +349,16 @@ const App = () => {
                   className="bg-orange-700 px-2 py-1 rounded-md text-white"
                 >
                   Completed
+                </button>
+                <button
+                  onClick={() => onPinTodo(item.id)}
+                  className={`px-2 py-1 rounded-md text-white`}
+                >
+                  {pinnedTodoIds.includes(item.id) ? (
+                    <Pin className="fill-yellow-500 text-yellow-500" />
+                  ) : (
+                    <Pin className="text-gray-300" />
+                  )}
                 </button>
               </label>
             ))}
