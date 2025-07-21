@@ -205,11 +205,12 @@ const App = () => {
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-100 px-4 sm:px-0">
       <div className="flex flex-col sm:flex-row justify-between items-center mt-5 w-full sm:w-[90%] max-w-[1200px]">
-        <img
+        {/* <img
           src="public/todoNest.png"
           className="w-28 h-28 sm:w-40 sm:h-40"
           alt=""
-        />
+        /> */}
+        <h1 className="text-3xl font-bold">TodoNest</h1>
         <div className="mt-4 sm:mt-0 flex w-full sm:w-[300px] rounded-full bg-black text-white p-2 focus:ring-2 focus:ring-blue-500 shadow-lg">
           <Search className="text-gray-300 ml-2" />
           <input
