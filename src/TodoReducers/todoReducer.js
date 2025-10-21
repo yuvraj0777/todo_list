@@ -57,6 +57,16 @@ export const todoReducer = (state, action) => {
         ),
       };
 
+    case "SET_REMINDER":
+      return {
+        ...state,
+        todos: state.todos.map((todo) => {
+          todo.id === action.payload.id
+            ? { ...(todo.reminder = action.payload.reminder) }
+            : todo;
+        }),
+      };
+
     default:
       return state;
   }
